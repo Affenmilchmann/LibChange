@@ -1,0 +1,33 @@
+* {
+  box-sizing:border-box;
+}
+.top {
+    background:darkorange;
+    padding:20px;
+    height:90px;
+}
+.main_text_box {
+    width:25%;
+    float:left;
+}
+.main {
+    width:100%;
+    padding:50px; 
+    overflow:hidden;
+    text-align:center;
+}
+.main_child {
+    display: inline-block;
+}
+.parent {
+    /*width:100%;*/ 
+    overflow:hidden;
+}
+.child {
+    /*float:left;*/
+}
+@media screen and (max-width:800px) {
+  .main {
+      padding:5px;
+  }
+}

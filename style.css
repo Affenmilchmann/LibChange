@@ -1,0 +1,125 @@
+/* global style */
+
+/* ----------------------------------------- */
+
+* {
+  box-sizing:border-box;
+}
+.glob {
+    /*background-color:#ebddce;*/
+    margin:0; 
+    padding:0;
+}
+.ok_error {
+    color:black;
+    padding:20;
+    background:lightblue;
+    font-size: 20px;
+    width:100%;
+}
+.fatal_error {
+    color:white;
+    padding:20;
+    background:black;
+    font-size: 20px;
+}
+.success {
+    color:green;
+}
+
+/* hat */
+.top {
+    background-color:#498391;
+    padding:20px;
+    height:90px;
+}
+.main_text_box {
+    width:25%;
+    float:left;
+}
+.main_button_box {
+    width:75%;
+    float:right;
+}
+.top_button {
+    float:right;
+    padding:20px;
+}
+.logged {
+    float:right;
+    color:#000066;
+    font-size: 20px;
+    text-decoration:underline;
+}
+
+/* body */
+.main {
+    width:100%;
+    padding:50px; 
+    overflow:hidden;
+    text-align:center;
+}
+
+/* main page blocks */
+.left_menu {
+    padding:15px; 
+    float:left;
+    background-color:#aebdd0;
+    width:25%;
+}
+.middle_menu {
+    padding:15px; 
+    float:left;
+    background-color:#efdac5;
+    width:50%;
+}
+.right_menu {
+    padding:15px; 
+    float:left;
+    background-color:#aebdd0;
+    width:25%;
+}
+
+.green_span {
+    color:green;
+}
+.red_span {
+    color:red;
+}
+
+.mini_main_heading {
+    background-color: gray;
+}
+
+/* ----------------------------- */ 
+
+.mini_heading {
+    background-color: lightgrey;
+}
+
+.main_profile {
+    margin: auto;
+    width: 50%; 
+    padding:10; 
+    overflow: auto;
+}
+
+.child_profile {
+    float:left; 
+    padding:10;
+    width: 50%; 
+    overflow: auto;
+}
+
+@media screen and (max-width:1000px) {
+  .main_text_box, .main_button_box, .top_button, .logged, .left_menu, .right_menu, .middle_menu, .main_profile, .child_profile {
+    width:100%;
+    float:none;
+  }
+  .top_button {
+    width:100%;
+  }
+  .top {
+      height:150px;
+  }
+}

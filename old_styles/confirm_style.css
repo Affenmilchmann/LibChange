@@ -1,0 +1,18 @@
+* {
+  box-sizing:border-box;
+}
+.top {
+    background:darkorange;
+    padding:20px;
+    height:90px;
+}
+.main_text_box {
+    width:25%;
+    float:left;
+}
+.main {
+    width:100%;
+    padding:50px; 
+    overflow:hidden;
+    text-align:center;
+}

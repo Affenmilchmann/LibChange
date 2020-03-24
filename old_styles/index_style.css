@@ -1,0 +1,52 @@
+* {
+  box-sizing:border-box;
+}
+
+.top {
+    background:darkorange;
+    padding:20px;
+    height:90px;
+}
+.top_button {
+    float:right;
+    padding:20px;
+}
+.you_logged {
+    float:right;
+}
+.main_text_box {
+    width:25%;
+    float:left;
+}
+.main_button_box {
+    width:75%;
+    float:right;
+}
+
+.left_menu {
+    float:left;
+    background:MediumPurple;
+    width:25%;
+}
+.middle_menu {
+    float:left;
+    background:Moccasin;
+    width:50%;
+}
+.right_menu {
+    float:left;
+    background:MediumPurple;
+    width:25%;
+}
+@media screen and (max-width:800px) {
+  .left_menu, .right_menu, .middle_menu {
+    width:100%; /* The width is 100%, when the viewport is 800px or smaller */
+    float:none;
+  }
+  .top_button {
+    width:100%;
+  }
+  .top {
+      height:150px;
+  }
+}
