@@ -1,0 +1,16 @@
+ErrorDocument 500 /500.php
+# Deny access to .htaccess
+<Files .htaccess>
+Order allow,deny
+Deny from all
+</Files>
+
+<FilesMatch "\.(txt)$">
+Order allow,deny
+Deny from all
+
+</FilesMatch>
+
+ErrorDocument 404 /error/404.php
+ErrorDocument 403 /error/403.php
+ErrorDocument 502 /error/502.php
