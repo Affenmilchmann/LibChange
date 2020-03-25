@@ -11,32 +11,30 @@
     <?php
         include 'funcs.php';
     
+        //checking user cookie
         $check_res = check_user_cookie();
         
-        $end_code['class'] = 1;
-        $end_code['message'] = '';
+        //setting messages values
+        $ok_error = "";
+        $fatal_error = "";
+        $suc_message = ""; 
         
+        // $check_res codes are in /funcs.php
         if ($check_res == 2) {
             header("Location: /ip_conflict.php");
         }
         else if ($check_res == -1) {
-            $end_code['class'] = "fatal_error";
-            $end_code['message'] = "DB Error. While checking you cookie file. Please contact support@libchange.ru"; 
+            $fatal_error = $cookie_select_error; 
         }
     
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $email_or_nickname = test_input($_POST["email_or_nickname"]);
             $password = test_input($_POST["password"]);
         }
+        
+        //making hat (aka 'shapka') html code
+        form_hat($check_res == 1, $user_nickname);
     ?>
-    
-    <section class="top">
-        <section class="main_text_box">
-            <a href="index.php">
-                <img src="images/Logo.png" alt="logo" width="200">
-            </a>
-        </section>
-    </section>
     
     <section class="main">
         <section>
@@ -64,8 +62,7 @@
                 
                 <?php
                 if ($check_res == 1) {
-                    $end_code['class'] = "ok_error";
-                    $end_code['message'] = "You are already logged!"; 
+                    $ok_error = $already_logged_error;
                 }
                 else {
                     if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -88,13 +85,11 @@
                                     header("Location: /index.php");
                                 }
                                 else {
-                                    $end_code['class'] = "ok_error";
-                                    $end_code['message'] = "Wrong password!"; 
+                                    $ok_error = $wrong_password_error;
                                 }
                             }
                             else {
-                                $end_code['class'] = "ok_error";
-                                $end_code['message'] = "This user does not exists!"; 
+                                $ok_error = $ok_user_existance_error;
                             }
                         }
                     }
@@ -107,7 +102,14 @@
                 <button>I don`t remember my password :(</button>
             </a>
             <?php
-                echo '<p class="' . $end_code['class'] . '">' . $end_code['message'] . '</p>';
+                if ($fatal_error != "")
+                echo '<p class="fatal_error">' . $fatal_error . '</p>';
+                
+                if ($ok_error != "")
+                    echo '<p class="ok_error">' . $ok_error . '</p>';
+                    
+                if ($suc_message != "")
+                    echo '<p class="success">' . $suc_message . '</p>';
             ?>
         </section>
     </section>

@@ -13,29 +13,36 @@
         
         delete_user_cookie("LibChangeID");
         
-        $password_min_len = 8;
-        
         $user_nickname = "NULL";
         $user_id = -1;
         
         $end_code['class'] = 1;
         $end_code['message'] = '';
         
+        //checking user cookie
         $check_res = check_user_cookie();
         
+        //setting messages values
+        $ok_error = "";
+        $fatal_error = "";
+        $suc_message = ""; 
+
+        // $check_res codes are in /funcs.php
         if($check_res == 1) {
             $user_id = get_id($_COOKIE["LibChangeCookie"]);
             $user_nickname = get_nickname($user_id);
+            if (is_int($user_nickname)) {
+                delete_user_cookie("LibChangeCookie");
+            }
         }
         else if ($check_res == 2) {
             header("Location: /ip_conflict.php");
         }
         else if ($check_res == -1) {
-            $end_code['class'] = "fatal_error";
-            $end_code['message'] = "DB Error. While checking you cookie file. Please contact support@libchange.ru"; 
+            $fatal_error = $cookie_select_error; 
         }
         
-        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        if ($check_res == 1) {
             $email_or_nickname = test_input($_POST["email_or_nickname"]);
             
             $res = select("id", "myusers", "nickname='" . $email_or_nickname . "' OR email ='" . $email_or_nickname . "'");
@@ -45,50 +52,16 @@
                 header("Location: /qna.php");
             }
             else if ($res == 0) {
-                $end_code['class'] = "ok_error";
-                $end_code['message'] = 'We cant find your login :(';
+                $ok_error = $login_existance_error;
             }
             else {
-                $end_code['class'] = "fatal_error";
-                $end_code['message'] = 'Error. While inserting data into DB. Request code ' . $res . '. Please, contact support@libchange.ru';
+                $fatal_error = $insert_error;
             }
         }
+        
+        //making hat (aka 'shapka') html code
+        form_hat($check_res == 1, $user_nickname);
     ?>
-    
-    <section class="top">
-        <section class="main_text_box">
-            <a href="index.php">
-                <img src="images/Logo.png" alt="logo" width="200">
-            </a>
-        </section>
-        <?php    
-            if(isset($_COOKIE["LibChangeCookie"]) and ($user_nickname != "NULL")) {
-                echo    "
-                        <section class='main_button_box'>
-                            <a class='top_button' href='logout.php'>
-                                <button>Logout</button>
-                            </a>
-                            <a href ='profile.php'>
-                                <p class='logged'>" . $user_nickname . " </p>
-                            </a>
-                        </section> 
-                
-                ";
-            }
-            else {
-                echo    "
-                        <section class='main_button_box'>
-                            <a class='top_button' href='log.php'>
-                                <button>Login</button>
-                            </a>
-                            <a class='top_button' href='reg.php'>
-                                <button>Registration</button>
-                            </a>
-                        </section>
-                        ";
-            }
-        ?>
-    </section>
     
     <section class="main">
         <section>
@@ -106,7 +79,14 @@
                 <input type="submit" name="submit" value="Next">  
             </form>
             <?php
-                echo '<p class="' . $end_code['class'] . '">' . $end_code['message'] . '</p>';
+                if ($fatal_error != "")
+                    echo '<p class="fatal_error">' . $fatal_error . '</p>';
+                
+                if ($ok_error != "")
+                    echo '<p class="ok_error">' . $ok_error . '</p>';
+                    
+                if ($suc_message != "")
+                    echo '<p class="success">' . $suc_message . '</p>';
             ?>
         </section>
     </section>

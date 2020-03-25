@@ -11,48 +11,50 @@
     <?php
         include 'funcs.php';
         
-        $password_min_len = 8;
-        
+        //checking user cookie
         $check_res = check_user_cookie();
         
-        if($check_res == 1) {
+        //setting messages values
+        $ok_error = "";
+        $fatal_error = "";
+        $suc_message = "";
+        
+        // $check_res codes are in /funcs.php
+        if($check_res == 1) { 
             $user_id = get_id($_COOKIE["LibChangeCookie"]);
             $user_nickname = get_nickname($user_id);
-            
-            $end_code['class'] = 1;
         
             if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $old_password = test_input($_POST["old_password"]);
                 $new_password = test_input($_POST["new_password"]);
                 $repeat_new_password = test_input($_POST["repeat_new_password"]);
                 
+                // $old_hash codes are in /funcs.php
                 $old_hash = get_password_hash($user_id);
                 
-                if (is_int($old_hash)) {
-                    $end_code['message'] = "Error. While selecting password hash. DB returned " . $old_hash . ". Please contact support@libchange.ru";
-                    $end_code['class'] = "fatal_error";
+                if (is_int($old_hash) and $old_hash == -1) {
+                    $fatal_error = $select_error;
+                }
+                if (is_int($old_hash) and $old_hash == 0) {
+                    $fatal_error = $user_existanse_error;
                 }
                 else if (!password_verify($old_password, $old_hash)) {
-                    $end_code['message'] = "Current password is incorrect!";
-                    $end_code['class'] = "ok_error";
+                    $ok_error = $wrong_password_error;
                 }
                 else if (strlen($new_password) < $password_min_len) {
-                    $end_code['message'] = "Password must contain at least " . $password_min_len . " characters.";
-                    $end_code['class'] = "ok_error";
+                    $ok_error = $short_password_error;
                 }
                 else if ($new_password != $repeat_new_password) {
-                    $end_code['message'] = "New passwords do not match!";
-                    $end_code['class'] = "ok_error";
+                    $ok_error = $password_dismatch_error;
                 }
                 else {
+                    //if all is ok then changing the password
                     $res = update("myusers", "password='" . password_hash($new_password, PASSWORD_DEFAULT) . "'", "id='" . $user_id . "'");
                     if (!is_int($res)) {
-                        $end_code['class'] = "success";
-                        $end_code['message'] = "Password had been changed";
+                        $suc_message = $password_changed_message;
                     }
                     else {
-                        $end_code['message'] = "Error. While updating DB. BD returned " . $res . ". Please contact support@libchange.ru";
-                        $end_code['class'] = "fatal_error";
+                        $fatal_error = $update_error;
                     }
                 }
             }
@@ -61,51 +63,16 @@
             header("Location: /ip_conflict.php");
         }
         else if ($check_res == -1) {
-            $end_code['class'] = "fatal_error";
-            $end_code['message'] = "DB Error. While checking you cookie file. Please contact support@libchange.ru"; 
+            $fatal_error = $cookie_select_error;
         }
+        else {
+            //sending user to the login page if he is not logged and there is no cookie error
+            header("Location: /log.php");
+        }
+        
+        //making hat (aka 'shapka') html code
+        form_hat($check_res == 1, $user_nickname);
     ?>
-    
-    <section class="top">
-        <section class="main_text_box">
-            <a href="index.php">
-                <img src="images/Logo.png" alt="logo" width="200">
-            </a>
-        </section>
-        <?php
-            if(isset($_COOKIE["LibChangeCookie"])) {
-                if ($user_nickname == "NULL")
-                {
-                    echo    "
-                            <section class='main_button_box'>
-                                <a class='top_button' href='log.php'>
-                                    <button>Login</button>
-                                </a>
-                                <a class='top_button' href='reg.php'>
-                                    <button>Registration</button>
-                                </a>
-                            </section>
-                            ";
-                }
-                else {
-                    echo    "
-                            <section class='main_button_box'>
-                                <a class='top_button' href='logout.php'>
-                                    <button>Logout</button>
-                                </a>
-                                <a href ='profile.php'>
-                                    <p class='logged'>" . $user_nickname . " </p>
-                                </a>
-                            </section> 
-                    
-                    ";
-                }
-            }
-            else {
-                header("Location: /log.php");
-            }
-            ?>
-    </section>
     
     <section class="main">
         <section>
@@ -139,14 +106,21 @@
                 </div>
                 <br>
                 <input type="submit" name="submit" value="Change">  
-                <?php
-                    echo '<p class="' . $end_code['class'] . '">' . $end_code['message'] . '</p>';
-                ?>
             </form>
             <br>
             <a href="/recovery.php">
                 <button>I don`t remember my password :(</button>
             </a>
+            <?php
+                if ($fatal_error != "")
+                    echo '<p class="fatal_error">' . $fatal_error . '</p>';
+                    
+                if ($ok_error != "")
+                    echo '<p class="ok_error">' . $ok_error . '</p>';
+                    
+                if ($suc_message != "")
+                    echo '<p class="success">' . $suc_message . '</p>';
+            ?>
         </section>
     </section>
 </body>

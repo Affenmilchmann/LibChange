@@ -10,15 +10,22 @@
     <?php
         include("funcs.php");
         
-        $code_input = $user_nickname = $email = $code = "";
-        $id = -1;
+        $code_input = $user_nickname = $email = $code = 0;
+        $id = 0;
         
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
           $code_input = test_input($_POST["code"]);
         }
         
+        //checking user cookie
         $check_res = check_user_cookie();
         
+        //setting messages values
+        $ok_error = "";
+        $fatal_error = "";
+        $suc_message = "";   
+        
+        // $check_res codes are in /funcs.php
         if($check_res == 1) {
             $id = get_id($_COOKIE["LibChangeCookie"]);
             $email = get_email($id);
@@ -29,69 +36,32 @@
             header("Location: /ip_conflict.php");
         }
         else if ($check_res == -1) {
-            $end_code['class'] = "fatal_error";
-            $end_code['message'] = "DB Error. While checking you cookie file. Please contact support@libchange.ru"; 
+            $fatal_error = $cookie_select_error;
         }
+        else {
+            //sending user to the login page if he is not logged and there is no cookie error
+            header("Location: /log.php");
+        }
+        
+        //making hat (aka 'shapka') html code
+        form_hat($check_res == 1, $user_nickname);
     ?>
-    <section class="top">
-        <section class="main_text_box">
-            <a href="../index.php">
-                <img src="images/Logo.png" alt="logo" width="200">
-            </a>
-        </section>
-            <?php
-                if ($user_nickname != 0)
-                {
-                    echo    "
-                            <section class='main_button_box'>
-                                <a class='top_button' href='log.php'>
-                                    <button>Login</button>
-                                </a>
-                                <a class='top_button' href='reg.php'>
-                                    <button>Registration</button>
-                                </a>
-                            </section>
-                            ";
-                }
-                else {
-                    echo    "
-                            <section class='main_button_box'>
-                                <a class='top_button' href='logout.php'>
-                                    <button>Logout</button>
-                                </a>
-                                <a href ='profile.php'>
-                                    <p class='logged'>" . $user_nickname . " </p>
-                                </a>
-                            </section> 
-                    
-                    ";
-                }
-                
-            ?>
-    </section>
+    
     <section class="main">
         <?php
-            if($code == "-1") {
+            if ($code_input == $code){
+                $res = update("myusers", "email_confirmed=-1", "id=" . $id);
+                
+                if ($res != false) {
+                    $suc_message = $email_confirmed_message;
+                }
+                else {
+                    $fatal_error = $update_error;
+                }
+            }
+            else if($code == "-1") {
                 echo '
                     <h3>Your email is already comfirmed!</h3>
-                ';
-            }
-            else if ($id == -1) {
-                echo '
-                    <h3>Please log in!</h3>
-                ';
-            }
-            else if ($code_input == $code){
-                update("myusers", "email_confirmed=-1", "id=" . $id);
-                
-                $sql =  "
-                    UPDATE `myusers`
-                    SET `email_confirmed`=-1
-                    WHERE `id` = " . $id . "
-                ";
-                
-                echo '
-                    <h3>Your email is comfirmed now!</h3>
                 ';
             }
             else {
@@ -108,11 +78,18 @@
                     </form>
                 ';
                 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-                    echo '
-                        <h3>Code is incorrect!</h3>
-                    ';
+                    $ok_error = $wrong_code_error;
                 }
             }
+
+            if ($fatal_error != "")
+                echo '<p class="fatal_error">' . $fatal_error . '</p>';
+                
+            if ($ok_error != "")
+                echo '<p class="ok_error">' . $ok_error . '</p>';
+                
+            if ($suc_message != "")
+                echo '<p class="success">' . $suc_message . '</p>';
         ?>
     </section>
 </body>

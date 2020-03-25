@@ -25,8 +25,15 @@
             $user_helps = "NULL";
             $user_ruins = "NULL";
 
+            //checking user cookie
             $check_res = check_user_cookie();
+            
+            //setting messages values
+            $ok_error = "";
+            $fatal_error = "";
+            $suc_message = ""; 
 
+            // $check_res codes are in /funcs.php
             if($check_res == 1) {
                 $user_id = get_id($_COOKIE["LibChangeCookie"]);
                 
@@ -45,16 +52,14 @@
                 header("Location: /ip_conflict.php");
             }
             else if ($check_res == -1) {
-                $end_code['class'] = "fatal_error";
-                $end_code['message'] = "DB Error. While checking you cookie file. Please contact support@libchange.ru"; 
+                $fatal_error = $cookie_select_error; 
             }
             
             if($_SERVER["REQUEST_METHOD"] == "GET") {
                 $temp_id = select("id", "myusers", "nickname='" . $_GET['nickname'] . "'");
 
                 if ($temp_id == -1) {
-                    $end_code['class'] = "fatal_error";
-                    $end_code['message'] = "DB Error. While selecting get request data. Please contact support@libchange.ru";
+                    $fatal_error = $select_error;
                 }
                 else if ($temp_id != 0) {
                     $temp_id = $temp_id['id'];
@@ -64,51 +69,21 @@
                         $user_location = get_location($temp_id);
                         $user_helps = get_fin_requests($temp_id);
                         $user_ruins = get_ruined_requests($temp_id);
+                        
+                        if ($user_nickname == -1 or $user_location == -1 or $user_helps == -1 or $user_ruins == -1 ) {
+                            $fatal_error = $select_error;
+                        }
                     }
                 }
             }
+            
+            //making hat (aka 'shapka') html code
+            form_hat($check_res == 1, $owner_nickname);
         ?>
-        <section class="top">
-            <section class="main_text_box">
-                <a href="index.php">
-                    <img src="images/Logo.png" alt="logo" width="200">
-                </a>
-            </section>
-            <?php
-                if ($owner_nickname == "NULL")
-                {
-                    echo    "
-                            <section class='main_button_box'>
-                                <a class='top_button' href='log.php'>
-                                    <button>Login</button>
-                                </a>
-                                <a class='top_button' href='reg.php'>
-                                    <button>Registration</button>
-                                </a>
-                            </section>
-                            ";
-                }
-                else {
-                    echo    "
-                            <section class='main_button_box'>
-                                <a class='top_button' href='logout.php'>
-                                    <button>Logout</button>
-                                </a>
-                                <a href ='profile.php' class='top_button' style='padding:0;'>
-                                    <p class='logged'>" . $owner_nickname . " </p>
-                                </a>
-                            </section> 
-                    
-                    ";
-                }
-                
-            ?>
-        </section>
-        
         
         <?php 
             if(isset($_COOKIE["LibChangeCookie"]) and $user_id != -1 or !$is_owner) {
-                if ($user_nickname == "NULL") {
+                if ($user_nickname == "NULL" and $check_res != 2) {
                     header("Location: /error/404.php");
                 }
                 
@@ -167,6 +142,17 @@
             else {
                 header("Location: /log.php");
             }
+            
+            
+            if ($fatal_error != "")
+            echo '<p class="fatal_error">' . $fatal_error . '</p>';
+            
+            if ($ok_error != "")
+                echo '<p class="ok_error">' . $ok_error . '</p>';
+                
+            if ($suc_message != "")
+                echo '<p class="success">' . $suc_message . '</p>';
+            
         ?>
     </body>
 </html>

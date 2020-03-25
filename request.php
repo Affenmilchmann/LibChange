@@ -15,11 +15,15 @@
         $user_nickname = "NULL";
         $user_id = -1;
         
-        $fatal_error = '';
-        $ok_error = '';
-        
+        //checking user cookie
         $check_res = check_user_cookie();
-            
+        
+        //setting messages values
+        $ok_error = "";
+        $fatal_error = "";
+        $suc_message = ""; 
+
+        // $check_res codes are in /funcs.php
         if($check_res == 1) {
             $user_id = get_id($_COOKIE["LibChangeCookie"]);
             $user_nickname = get_nickname($user_id);
@@ -31,76 +35,46 @@
             header("Location: /ip_conflict.php");
         }
         else if ($check_res == -1) {
-            $fatal_error = "DB Error. While checking you cookie file. Please contact support@libchange.ru"; 
+            $fatal_error = $cookie_select_error; 
         }
         else if ($check_res == 0 or $check_res == 3) {
             header("Location: /log.php");
         }
         
-        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        if ($check_res == 1 and $_SERVER["REQUEST_METHOD"] == "POST") {
             $location = text_test_input($_POST["location"]);
             $title = text_test_input($_POST["title"]);
             $comments = text_test_input($_POST["comments"]);
             
             if (strlen($location) == 0) {
-                $ok_error = "Location field is required!"; 
+                $ok_error = $location_empty_error;
             }
             else if (strlen($title) == 0) {
-                $ok_error = "Title field is required!"; 
+                $ok_error = $title_empty_error;
             } 
-            else if (strlen($location) > 100) {
-                $ok_error = "Location max lenght is 100! Your message lenght is " . strlen($location); 
+            else if (strlen($location) > $max_location_or_title_length) {
+                $ok_error = $location_or_title_lenght_error . strlen($location); 
             }
-            else if (strlen($title) > 100) {
-                $ok_error = "Title max lenght is 100! Your message lenght is " . strlen($title); 
+            else if (strlen($title) > $max_location_or_title_length) {
+                $ok_error = $location_or_title_lenght_error . strlen($title); 
+            }
+            else if (strlen($comments) > 100) {
+                $ok_error = $comment_lenght_error . strlen($comments); 
             }
             else if (!check_text($location) or !check_text($title) or !check_text($comments)) {
-                $ok_error ='Only latin letters, digits, space and "?!,.+-=&" are allowed'; 
+                $ok_error = $text_format_error;
             }
             else {
                 $res = insert("`requests`(`location`, `title`, `comment`)", "('" . $location . "', '" . $title . "', '" . $comments . "')");
                 if ($res == false) {
-                    $fatal_error = "Error. While inserting data into DB. Please contact support@libchange.ru";
+                    $fatal_error = $insert_error;
                 }
             }
         }
+        
+        //making hat (aka 'shapka') html code
+        form_hat($check_res == 1, $user_nickname);
     ?>
-    
-    <section class="top">
-        <section class="main_text_box">
-            <a href="index.php">
-                <img src="images/Logo.png" alt="logo" width="200">
-            </a>
-        </section>
-        <?php
-            if(isset($_COOKIE["LibChangeCookie"]) and ($user_nickname != "NULL")) {
-                echo    "
-                        <section class='main_button_box'>
-                            <a class='top_button' href='logout.php'>
-                                <button>Logout</button>
-                            </a>
-                            <a href ='profile.php'>
-                                <p class='logged'>" . $user_nickname . " </p>
-                            </a>
-                        </section> 
-                
-                ";
-            }
-            else {
-                delete_user_cookie("LibChangeCookie");
-                echo    "
-                        <section class='main_button_box'>
-                            <a class='top_button' href='log.php'>
-                                <button>Login</button>
-                            </a>
-                            <a class='top_button' href='reg.php'>
-                                <button>Registration</button>
-                            </a>
-                        </section>
-                        ";
-            }
-        ?>
-    </section>
     
     <section class="main">
         <section>
@@ -115,8 +89,14 @@
                 <input type="submit" name="submit" value="Submit">  
             </form>
             <?php
-                if ($fatal_error != '') echo '<p class="fatal_error">' . $fatal_error . '</p>';
-                if ($ok_error != '') echo '<p class="ok_error">' . $ok_error . '</p>';
+                if ($fatal_error != "")
+                    echo '<p class="fatal_error">' . $fatal_error . '</p>';
+                
+                if ($ok_error != "")
+                    echo '<p class="ok_error">' . $ok_error . '</p>';
+                    
+                if ($suc_message != "")
+                    echo '<p class="success">' . $suc_message . '</p>';
             ?>
         </section>
     </section>

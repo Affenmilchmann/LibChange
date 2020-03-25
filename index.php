@@ -15,15 +15,22 @@
             $user_id = -1;
             $user_nickname = "NULL";
             
-            $end_code['class'] = 1;
-            $end_code['message'] = "";
-            
+            //checking user cookie
             $check_res = check_user_cookie();
             
+            //setting messages values
+            $ok_error = "";
+            $fatal_error = "";
+            $suc_message = ""; 
+            
+            // $check_res codes are in /funcs.php
             if($check_res == 1) {
                 $user_id = get_id($_COOKIE["LibChangeCookie"]);
                 $user_nickname = get_nickname($user_id);
-                if (is_int($user_nickname)) {
+                if ($user_id == -1 or $user_nickname == -1) {
+                    $fatal_error = $select_error;
+                }
+                else if (is_int($user_nickname)) {
                     delete_user_cookie("LibChangeCookie");
                 }
             }
@@ -31,46 +38,13 @@
                 header("Location: /ip_conflict.php");
             }
             else if ($check_res == -1) {
-                $end_code['class'] = "fatal_error";
-                $end_code['message'] = "DB Error. While checking you cookie file. Please contact support@libchange.ru"; 
+                $fatal_error = $cookie_select_error;    
             }
+            
+            
+            //making hat (aka 'shapka') html code
+            form_hat($check_res == 1, $user_nickname);
         ?>
-        <section class="top">
-            <section class="main_text_box">
-                <a href="index.php">
-                    <img src="images/Logo.png" alt="logo" width="200">
-                </a>
-            </section>
-            <?php
-                if ($user_nickname == "NULL")
-                {
-                    echo    "
-                            <section class='main_button_box'>
-                                <a class='top_button' href='log.php'>
-                                    <button>Login</button>
-                                </a>
-                                <a class='top_button' href='reg.php'>
-                                    <button>Registration</button>
-                                </a>
-                            </section>
-                            ";
-                }
-                else {
-                    echo    "
-                            <section class='main_button_box'>
-                                <a class='top_button' href='logout.php'>
-                                    <button>Logout</button>
-                                </a>
-                                <a href ='profile.php'>
-                                    <p class='logged'>" . $user_nickname . " </p>
-                                </a>
-                            </section> 
-                    
-                    ";
-                }
-                
-            ?>
-        </section>
         
         <section>
             <div>
@@ -115,15 +89,15 @@
                 <section class="right_menu">Right!</section>
             </div>
         </section> 
-        <footer>
-            <?php
-                /*if(isset($_COOKIE["LibChangeCookie"])) {
-                    echo "Cookie is set! " . $_COOKIE["LibChangeCookie"] .  "<br>";   
-                }
-                else {
-                    echo "Cookie is not set!<br>"; 
-                }*/
-            ?>
-        </footer>
+        <?php
+            if ($fatal_error != "")
+                echo '<p class="fatal_error">' . $fatal_error . '</p>';
+                
+            if ($ok_error != "")
+                echo '<p class="ok_error">' . $ok_error . '</p>';
+                
+            if ($suc_message != "")
+                echo '<p class="success">' . $suc_message . '</p>';    
+        ?>
     </body>
 </html>

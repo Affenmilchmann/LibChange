@@ -1,5 +1,7 @@
 <?php  
-    function bubble_sort($len) {
+    include 'constants_and_errors.php';
+
+    /*function bubble_sort($len) {
             $time = time();
             
             for ($i = 0; $i < $len; $i++) {
@@ -18,7 +20,7 @@
             }
             
             echo "Array of " . $len . " elements sorted in " . (time() - $time) . " sec with simple Bubble sort";
-    }
+    }*/
     
     /*function load_image($file, $id) {
         $target_dir = "images/user_avatars/";
@@ -75,6 +77,49 @@
             }
         }
     }*/
+    
+    function form_hat($is_logged, $user_nickname) {
+        echo 
+        '
+        <section class="top">
+            <section class="main_text_box">
+                <a href="index.php">
+                    <img src="images/Logo.png" alt="logo" width="200">
+                </a>
+            </section>
+            ';
+                if (!$is_logged)
+                {
+                    echo    "
+                            <section class='main_button_box'>
+                                <a class='top_button' href='log.php'>
+                                    <button>Login</button>
+                                </a>
+                                <a class='top_button' href='reg.php'>
+                                    <button>Registration</button>
+                                </a>
+                            </section>
+                            ";
+                }
+                else {
+                    echo    "
+                            <section class='main_button_box'>
+                                <a class='top_button' href='logout.php'>
+                                    <button>Logout</button>
+                                </a>
+                                <a href ='profile.php'>
+                                    <p class='logged'>" . $user_nickname . " </p>
+                                </a>
+                            </section> 
+                    
+                    ";
+                }
+                
+
+            echo '
+        </section>
+        ';
+    }
     
     function test_input($data) {
         $data = trim($data);

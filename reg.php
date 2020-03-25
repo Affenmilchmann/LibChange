@@ -9,22 +9,24 @@
 <body class="glob">
     <?php
         include("funcs.php");
-        
-        $password_min_len = 8;
-        $nickname_min_len = 4;
 
+        //checking user cookie
         $check_res = check_user_cookie();
-            
+        
+        //setting messages values
+        $ok_error = "";
+        $fatal_error = "";
+        $suc_message = ""; 
+
+        // $check_res codes are in /funcs.php
         if($check_res == 1) {
-            $end_code['class'] = "ok_error";
-            $end_code['message'] = "You are already logged!"; 
+            $ok_error = $already_logged_error;
         }
         else if ($check_res == 2) {
             header("Location: /ip_conflict.php");
         }
         else if ($check_res == -1) {
-            $end_code['class'] = "fatal_error";
-            $end_code['message'] = "DB Error. While checking you cookie file. Please contact support@libchange.ru"; 
+            $fatal_error = $cookie_select_error; 
         }
         else if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $nickname = test_input($_POST["nickname"]);
@@ -43,48 +45,40 @@
             
             if($nickname_res != -1 and $email_res != -1) {
                 if (strtolower($nickname_res['nickname']) == strtolower($nickname)) {
-                    $end_code['class'] = "ok_error";
-                    $end_code['message'] = 'This nickname already exists!';
+                    $ok_error = $nickname_already_exists_error;
                 }
                 else if (!check_nickname($nickname)) {
-                    $end_code['class'] = "ok_error";
-                    $end_code['message'] = "Only letters, digits and '_' allowed in nickname!";
+                    $ok_error = $nickname_format_error;
                 }
                 else if (strlen($email) == 0) {
-                    $end_code['class'] = "ok_error";
-                    $end_code['message'] = 'You must input your email!';
+                    $ok_error = $email_empty_error;
                 }
                 else if (strtolower($email_res['email']) == strtolower($email)) {
-                    $end_code['class'] = "ok_error";
-                    $end_code['message'] = 'This email already exists!';
+                    $ok_error = $email_already_exists_error;
                 }
                 else if (!filter_var($email, FILTER_VALIDATE_EMAIL) and strlen($email) != 0) {
-                    $end_code['class'] = "ok_error";
-                    $end_code['message'] = 'Email format is invalid.';
+                    $ok_error = $email_format_error;
                 }
                 else if (strlen($nickname) < $nickname_min_len) {
-                    $end_code['class'] = "ok_error";
-                    $end_code['message'] = 'Your nickname must contain at least ' . $nickname_min_len . ' characters';
+                    $ok_error = $short_nickname_error;
+                }
+                else if (!check_text($location)) {
+                    $ok_error = $text_format_error . " in location field";
                 }
                 else if (!check_text($question) and (strlen($question) != 0)) {
-                    $end_code['class'] = "ok_error";
-                    $end_code['message'] = 'Only latin letters, digits, space and "?!,.+-=&" allowed in question';
+                    $ok_error = $text_format_error;
                 }
                 else if (strlen($answer) == 0 and (strlen($question) != 0)) {
-                    $end_code['class'] = "ok_error";
-                    $end_code['message'] = 'You must input answer!';
+                    $ok_error = $empty_answer_error;
                 }
                 else if (!check_text($answer) and (strlen($question) != 0)) {
-                    $end_code['class'] = "ok_error";
-                    $end_code['message'] = 'Only latin letters, digits, space and "?!,.+-=&" allowed in answer';
+                    $ok_error = $text_format_error;
                 }
                 else if (strlen($password) < $password_min_len) {
-                    $end_code['class'] = "ok_error";
-                    $end_code['message'] = 'Your password must contain at least ' . $password_min_len . ' characters and contain letters and digits only.';
+                    $ok_error = $short_password_error;
                 }
                 else if ($password_repeat != $password) {
-                    $end_code['class'] = "ok_error";
-                    $end_code['message'] = 'Passwords are different!';
+                    $ok_error = $password_dismatch_error;
                 }
                 else {
                     //generating confirm code
@@ -137,25 +131,18 @@
                         header("Location: /confirm.php");
                     }
                     else {
-                        $end_code['class'] = "fatal_error";
-                        $end_code['message'] = 'Error. While inserting data into DB. Request code ' . $res . '. Please, contact support@libchange.ru';
+                        $fatal_error = $insert_error;
                     }
                 }
             }
             else {
-                $end_code['class'] = "fatal_error";
-                $end_code['message'] = 'Error. While inserting data into DB. Request code ' . $email_res . ' and ' . $nickname_res . '. Please, contact support@libchange.ru';
+                $fatal_error = $insert_error;
             }
         }
+        
+        //making hat (aka 'shapka') html code
+        form_hat($check_res == 1, $user_nickname);
     ?>
-    
-    <section class="top">
-        <section class="main_text_box">
-            <a href="index.php">
-                <img src="images/Logo.png" alt="logo" width="200">
-            </a>
-        </section>
-    </section>
     
     <section class="main">
         <section class="main_child">
@@ -226,7 +213,14 @@
                 </div>
                 <input type="submit" name="submit" value="Submit">  
                 <?php
-                    echo '<p class="' . $end_code['class'] . '">' . $end_code['message'] . '</p>';
+                    if ($fatal_error != "")
+                    echo '<p class="fatal_error">' . $fatal_error . '</p>';
+                
+                    if ($ok_error != "")
+                        echo '<p class="ok_error">' . $ok_error . '</p>';
+                        
+                    if ($suc_message != "")
+                        echo '<p class="success">' . $suc_message . '</p>';
                 ?>
                 <p>* Required fields</p>
                 <p>** Not required, but if you forget your password, you will not be able to restore your account!</p>

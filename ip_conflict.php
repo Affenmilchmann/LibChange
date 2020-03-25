@@ -7,13 +7,12 @@
     <title>IP conflict</title>
 </head>
 <body class="glob">
-    <section class="top">
-        <section class="main_text_box">
-            <a href="index.php">
-                <img src="images/Logo.png" alt="logo" width="200">
-            </a>
-        </section>
-    </section>
+    <?php
+        include 'funcs.php';
+    
+        //making hat (aka 'shapka') html code
+        form_hat(check_user_cookie() == 1, $user_nickname);
+    ?>
     <section class="main">
         <h3>Looks like you are logged in from different place! Please relogin.</h3>
         <a href="logout.php">
