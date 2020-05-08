@@ -19,13 +19,13 @@
         $suc_message = ""; 
 
         // $check_res codes are in /funcs.php
-        if($check_res == 1) {
+        if($check_res == $OK) {
             $ok_error = $already_logged_error;
         }
-        else if ($check_res == 2) {
-            header("Location: /ip_conflict.php");
+        else if ($check_res == $IP_CONFLICT) {
+            direct_to("ip_conflict.php");
         }
-        else if ($check_res == -1) {
+        else if ($check_res == $DB_ERROR) {
             $fatal_error = $cookie_select_error; 
         }
         else if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -34,17 +34,17 @@
             $location = test_input($_POST["location"]);
             $password = test_input($_POST["password"]);
             $password_repeat = test_input($_POST["password_repeat"]);
-            $question = text_test_input($_POST["question"]);
-            $answer = text_test_input($_POST["answer"]);
-            
+    
             // checking existanse
             $nickname_res = select("nickname", "myusers", "LOWER(nickname) ='" . strtolower($nickname) . "'");
             $email_res = select("email", "myusers", "LOWER(email) ='" . strtolower($email) . "'");
             
-            $end_code['class'] = 1;
             
-            if($nickname_res != -1 and $email_res != -1) {
-                if (strtolower($nickname_res['nickname']) == strtolower($nickname)) {
+            if($nickname_res != $DB_ERROR and $email_res != $DB_ERROR) {
+                if (strlen($nickname) == 0) {
+                    $ok_error = $nickname_empty_error;
+                }
+                else if (strtolower($nickname_res['nickname']) == strtolower($nickname)) {
                     $ok_error = $nickname_already_exists_error;
                 }
                 else if (!check_nickname($nickname)) {
@@ -62,17 +62,8 @@
                 else if (strlen($nickname) < $nickname_min_len) {
                     $ok_error = $short_nickname_error;
                 }
-                else if (!check_text($location)) {
-                    $ok_error = $text_format_error . " in location field";
-                }
-                else if (!check_text($question) and (strlen($question) != 0)) {
-                    $ok_error = $text_format_error;
-                }
-                else if (strlen($answer) == 0 and (strlen($question) != 0)) {
-                    $ok_error = $empty_answer_error;
-                }
-                else if (!check_text($answer) and (strlen($question) != 0)) {
-                    $ok_error = $text_format_error;
+                else if (!check_password($password)) {
+                    $ok_error = $passwod_format_error;
                 }
                 else if (strlen($password) < $password_min_len) {
                     $ok_error = $short_password_error;
@@ -92,9 +83,6 @@
                     if (strlen($location) != 0) {
                         $where .= ", `city`";
                     }
-                    if (strlen($question) != 0) {
-                        $where .= ", `question`, `answer`";
-                    }
                     $where .= ")";
                     
                     $what = "('" . $nickname . "','" . password_hash($password, PASSWORD_DEFAULT) . "','" . $code . "'";
@@ -104,14 +92,11 @@
                     if (strlen($location) != 0) {
                         $what .= ", '" . $location . "'";
                     }
-                    if (strlen($question) != 0) {
-                        $what .= ", '" . str_replace(" ", "_", $question) . "','" . password_hash(strtolower($answer), PASSWORD_DEFAULT) . "'";
-                    }
                     $what .= ")";
                     
                     //sending INSERT message
                     $res = insert($where, $what);
-                    if (!is_int($res))
+                    if ($res != $DB_ERROR)
                     {
                         delete_user_cookie("LibChangeCookie");
                         
@@ -126,9 +111,7 @@
                         $res = insert("`cookies`(`user_id`, `cookie`)", "(" . $res['id'] . ", '" . $key . "')");
                         
                         //sending confirmation code to users email
-                        $headers = "From: support@libchange.ru \n";
-                        mail ($email, "LibChange email", "Your security code is: " . $code . ". \n \n You are not to reply", $headers);
-                        header("Location: /confirm.php");
+                        direct_to("message_send.php");
                     }
                     else {
                         $fatal_error = $insert_error;
@@ -136,12 +119,12 @@
                 }
             }
             else {
-                $fatal_error = $insert_error;
+                $fatal_error = $select_error;
             }
         }
         
         //making hat (aka 'shapka') html code
-        form_hat($check_res == 1, $user_nickname);
+        form_hat($check_res == $OK, $user_nickname);
     ?>
     
     <section class="main">
@@ -193,37 +176,11 @@
                     </div>
                 </div>
                 <br>
-                <br>
-                <div>
-                    <div>
-                        Security question**:
-                    </div>
-                    <div>
-                        <input type="text" name="question" <?php echo "value='" . $question . "'"?>>
-                    </div>
-                </div>
-                <br>
-                <div>
-                    <div>
-                        Answer**:
-                    </div>
-                    <div>
-                        <input type="text" name="answer" <?php echo "value='" . $answer . "'"?>>
-                    </div>
-                </div>
                 <input type="submit" name="submit" value="Submit">  
                 <?php
-                    if ($fatal_error != "")
-                    echo '<p class="fatal_error">' . $fatal_error . '</p>';
-                
-                    if ($ok_error != "")
-                        echo '<p class="ok_error">' . $ok_error . '</p>';
-                        
-                    if ($suc_message != "")
-                        echo '<p class="success">' . $suc_message . '</p>';
+                    form_error_section($fatal_error, $ok_error, $suc_message);
                 ?>
                 <p>* Required fields</p>
-                <p>** Not required, but if you forget your password, you will not be able to restore your account!</p>
             </form>
         </section>
     </section>

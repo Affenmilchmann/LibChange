@@ -7,12 +7,6 @@
     <title>IP conflict</title>
 </head>
 <body class="glob">
-    <?php
-        include 'funcs.php';
-    
-        //making hat (aka 'shapka') html code
-        form_hat(check_user_cookie() == 1, $user_nickname);
-    ?>
     <section class="main">
         <h3>Looks like you are logged in from different place! Please relogin.</h3>
         <a href="logout.php">

@@ -20,7 +20,7 @@
             //deletting cookie from browser
             delete_user_cookie("LibChangeCookie");
         }
-        header("Location: /index.php");
+        direct_to("index.php");
 
     ?>
     <section class="top">

@@ -26,25 +26,31 @@
         $suc_message = "";   
         
         // $check_res codes are in /funcs.php
-        if($check_res == 1) {
+        if($check_res == $OK) {
             $id = get_id($_COOKIE["LibChangeCookie"]);
-            $email = get_email($id);
-            $user_nickname = get_nickname($id);
-            $code = get_code($id);
+                
+            $user_info = get_user_info($id);
+            $email = $user_info['email'];
+            $user_nickname = $user_info['nickname'];
+            $code = $user_info['email_confirmed'];
         }
-        else if ($check_res == 2) {
-            header("Location: /ip_conflict.php");
+        else if ($check_res == $IP_CONFLICT) {
+            direct_to("ip_conflict.php");
         }
-        else if ($check_res == -1) {
+        else if ($check_res == $DB_ERROR) {
             $fatal_error = $cookie_select_error;
         }
         else {
             //sending user to the login page if he is not logged and there is no cookie error
-            header("Location: /log.php");
+            direct_to("log.php");
+        }
+        
+        if (is_requests_amount_ok($_SERVER['REMOTE_ADDR']) == false) {
+            $ok_error = $max_requests_achieved;
         }
         
         //making hat (aka 'shapka') html code
-        form_hat($check_res == 1, $user_nickname);
+        form_hat($check_res == $OK, $user_nickname);
     ?>
     
     <section class="main">
@@ -52,7 +58,7 @@
             if ($code_input == $code){
                 $res = update("myusers", "email_confirmed=-1", "id=" . $id);
                 
-                if ($res != false) {
+                if ($res != $DB_ERROR) {
                     $suc_message = $email_confirmed_message;
                 }
                 else {
@@ -74,22 +80,19 @@
                         <div class="child">
                             <input type="text" name="code">
                         </div>
+                        <br>
                         <input type="submit" name="submit" value="Submit"> 
                     </form>
+                    <a href="message_send.php">
+                        <button>Send again</button>
+                    </a>
                 ';
                 if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $ok_error = $wrong_code_error;
                 }
             }
 
-            if ($fatal_error != "")
-                echo '<p class="fatal_error">' . $fatal_error . '</p>';
-                
-            if ($ok_error != "")
-                echo '<p class="ok_error">' . $ok_error . '</p>';
-                
-            if ($suc_message != "")
-                echo '<p class="success">' . $suc_message . '</p>';
+            form_error_section($fatal_error, $ok_error, $suc_message);
         ?>
     </section>
 </body>

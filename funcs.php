@@ -77,6 +77,31 @@
             }
         }
     }*/
+    function send_email($text, $email) {
+        include "constants_and_errors.php";
+        
+        $message = "
+        <html>
+            <head>
+                <title>LibChange</title>
+            </head>
+            <body> ".
+                $text
+            ."</body>
+        </html>
+        ";
+        
+        // Always set content-type when sending HTML email
+        $headers['Ver']  = 'MIME-Version: 1.0';
+        $headers['Type'] = 'Content-type: text/html; charset=iso-8859-1';
+        
+        // Дополнительные заголовки
+        $headers['From'] = "From: support@libchange.ru \n";
+        
+        //echo $message . "<br>" . implode("\r\n", $headers) . "<br>" . $email . "<br>";
+        
+        return mail($email, "LibChange support", $message, implode("\r\n", $headers));
+    }
     
     function form_hat($is_logged, $user_nickname) {
         echo 
@@ -121,6 +146,21 @@
         ';
     }
     
+    function form_error_section($fatal_error, $ok_error, $suc_message) {
+        if ($fatal_error != "")
+            ?> <p class="fatal_error"> <?php echo $fatal_error ?> </p> <?php
+            
+        if ($ok_error != "")
+            ?> <p class="ok_error"> <?php echo $ok_error ?> </p> <?php
+            
+        if ($suc_message != "")
+            ?> <p class="success"> <?php echo $suc_message ?> </p> <?php
+    }
+    
+    function direct_to($where) {
+        header("Location: /" . $where);
+    }
+    
     function test_input($data) {
         $data = trim($data);
         $data = stripslashes($data);
@@ -133,33 +173,85 @@
         $data = trim($data);
         $data = stripslashes($data);
         $data = htmlspecialchars($data);
+        $data = str_replace(' ', '_', $data);
         return $data;
+    }
+    
+    function is_requests_amount_ok($user_ip) {
+        include 'constants_and_errors.php';
+                
+        $data = select("first_request, req_amount", "ip_requests", '`ip`="' . $user_ip . '"');
+        
+        if ($data == $EMPTY_ANSWER) {
+            
+            $res = insert("`ip_requests`(`ip`)", "('" . $user_ip . "')");
+            
+            if ($res == $DB_ERROR) return $DB_ERROR;
+            
+            return true;
+        }
+        else if ($data == $DB_ERROR) {
+            return $DB_ERROR;
+        }
+        
+        $res = update("ip_requests", "req_amount = req_amount + 1", '`ip`="' . $user_ip . '"');
+        if ($res == $DB_ERROR) return $DB_ERROR;
+        
+        //first request time
+        $date = $data['first_request'];
+        //current time
+        $curr = date_create(date('o-m-j H:i:s'));
+        //formatting sql time
+        $date = date_create($date);
+        //calculating difference in seconds
+        $diff = $curr->getTimestamp() - $date->getTimestamp();
+        
+        /*echo $MAX_REQUESTS_INTERVAL . "<br>";
+        echo $diff . "<br>";*/
+        
+        //if time is expiered, than reset
+        if ($diff > $MAX_REQUESTS_INTERVAL) {
+            
+            $res = delete("ip_requests", "`ip`='" . $user_ip . "'");
+            
+            if ($res == $DB_ERROR) return $DB_ERROR;
+            
+            return true;
+        }
+        else if ($data['req_amount'] < $MAX_REQUESTS_AMOUNT) {
+            return true;
+        }
+        else return false;
+    }
+    
+    function global_check($str, $allow_str) {
+        $is_good = true;
+        
+        for ($i = 0; $i < strlen($str); $i++) {
+            if (strpos($allow_str, $str[$i]) == false) {
+                $is_good = false;
+            }
+        }
+        
+        return $is_good;
+    }
+    
+    function check_password($password) {
+        $allowed = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_#*!";
+        
+        return global_check($password, $allowed);
     }
     
     function check_nickname($nickname) {
         $allowed = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
-        $is_good = true;
         
-        for ($i = 0; $i < strlen($nickname); $i++) {
-            if (strpos($allowed, $nickname[$i]) == false) {
-                $is_good = false;
-            }
-        }
-        
-        return $is_good;
+        return global_check($nickname, $allowed);
     }
     
     function check_text($str) {
-        $allowed = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ?!,.+-=& ";
-        $is_good = true;
+        $allowed = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ?!,.+-=&_ ";
         
-        for ($i = 0; $i < strlen($str); $i++) {
-            if (strpos($allowed, $str[$i]) == false) {
-                $is_good = false;
-            }
-        }
-        
-        return $is_good;
+        return global_check($str, $allowed);
     }
     
     function getKey($n) { 
@@ -187,22 +279,24 @@
     
     //comparing ip and cookie existance
     function check_user_cookie() {
+        include 'constants_and_errors.php';
+        
         if (isset($_COOKIE["LibChangeCookie"])) {
             $res = select("ip", "cookies", "cookie='" . $_COOKIE["LibChangeCookie"] . "'");
             
-            if (!is_int($res)) {
+            if ($res != $EMPTY_ANSWER and $res != $DB_ERROR) {
                 if ($res['ip'] == $_SERVER['REMOTE_ADDR']) {
-                    return 1; //all ok
+                    return $OK; //all ok
                 }
-                else return 2; //ip conflict
+                else return $IP_CONFLICT; //ip conflict
             }
-            else if ($res == 0) {
+            else if ($res == $EMPTY_ANSWER) {
                 delete_user_cookie("LibChangeCookie");
-                return 0; //cookie missing on server. cookie deleted from user side
+                return $EMPTY_ANSWER; //cookie missing on server. cookie deleted from user side
             }
-            else return -1; //sql error
+            else return $DB_ERROR; //sql error
         }
-        else return 3; //cookie is not set
+        else return $COOKIE_NOT_SET; //cookie is not set
     }
     
     function set_conn() {
@@ -246,9 +340,13 @@
         $sql = "INSERT INTO " . $where . " 
                 VALUES " . $what;
             
-        if ($DEBUG_MODE) echo $sql . "<br>";
+        //echo $sql . "<br>";
         
         $result = mysqli_query($conn, $sql);
+        
+        if ($result == false) {
+            echo "ERROR: " . mysqli_error($conn) . "<br>";
+        }
         
         if ($conn != false) {
             $conn->close();
@@ -262,10 +360,6 @@
         
         $sql = "DELETE FROM " . $from .  " 
                 WHERE " . $where;
-                
-        if ($DEBUG_MODE) { 
-            echo $sql . "<br>";
-        }
         
         $result = mysqli_query($conn, $sql);
         
@@ -284,11 +378,6 @@
                     SET " . $what . "
                     WHERE " . $where . "
                 ";
-                
-         
-        if ($DEBUG_MODE) { 
-            echo $sql . "<br>";
-        }
         
         $result = mysqli_query($conn, $sql);
         
@@ -300,6 +389,8 @@
     }
     
     function select($what, $from, $where) {
+        include "constants_and_errors.php";
+        
         $conn = set_conn();
         
         $sql = "SELECT " . $what . " 
@@ -308,11 +399,7 @@
         
         //echo $sql . "<br>";
         
-        if ($DEBUG_MODE) { 
-            echo $sql . "<br>";
-        }
-        
-        if($result = mysqli_query($conn, $sql)){
+        if($result = mysqli_query($conn, $sql)) {
             if ($conn != false) {
                 $conn->close();
             }
@@ -322,42 +409,50 @@
                 
                 return $row;
             }
-            else return 0;
+            else return $EMPTY_ANSWER;
         }
         else {
             echo "ERROR: " . mysqli_error($conn) . "<br>"; 
             if ($conn != false) {
                 $conn->close();
             }
-            return -1;
+            return $DB_ERROR;
         }
     }
     
     //high functions
+    function get_user_info($user_id) {
+        $info = select("*", "myusers", "id=" . $user_id);
+        
+        return $info;
+    }
+    
     function get_id($cookie) {
+        include "constants_and_errors.php";
+        
         $res = select("user_id", "cookies", "cookie='" . $_COOKIE["LibChangeCookie"] . "'");
         
-        if ($res != 0 and $res != -1) {
-            return $res['user_id'];
-        }
-        else {
+        if ($res == $EMPTY_ANSWER) {
             delete_user_cookie("LibChangeCookie");
-            return -1;
         }
+        
+        return $res['user_id'];
     }
     
     function global_get($id, $what) {
+        include "constants_and_errors.php";
+        
         $res = select($what, "myusers", "id='" . $id ."'");
         
         if ($res == 0) {
-            return 0;
+            return $EMPTY_ANSWER;
         }
         else if ($res != -1) {
             return $res[$what];
         }
         else {
             echo "Error: Your profile data is missing. Please contact support@libchange.ru";
-            return -1;
+            return $DB_ERROR;
         }
     }
     

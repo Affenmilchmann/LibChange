@@ -10,6 +10,7 @@
     
     <?php
         include 'funcs.php';
+        include 'constants_and_errors.php';
     
         //checking user cookie
         $check_res = check_user_cookie();
@@ -20,11 +21,18 @@
         $suc_message = ""; 
         
         // $check_res codes are in /funcs.php
-        if ($check_res == 2) {
-            header("Location: /ip_conflict.php");
+        if ($check_res == $IP_CONFLICT) {
+            direct_to("ip_conflict.php");
         }
-        else if ($check_res == -1) {
+        else if ($check_res == $DB_ERROR) {
             $fatal_error = $cookie_select_error; 
+        } 
+        else if ($check_res == $OK) {
+            $user_id = get_id($_COOKIE["LibChangeCookie"]);
+                
+            $user_info = get_user_info($user_id);
+            
+            $user_nickname = $user_info['nickname'];
         }
     
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -33,7 +41,7 @@
         }
         
         //making hat (aka 'shapka') html code
-        form_hat($check_res == 1, $user_nickname);
+        form_hat($check_res == $OK, $user_nickname);
     ?>
     
     <section class="main">
@@ -61,35 +69,40 @@
                 <input type="submit" name="submit" value="Login">  
                 
                 <?php
-                if ($check_res == 1) {
+                if ($check_res == $OK) {
                     $ok_error = $already_logged_error;
                 }
                 else {
                     if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         
-                        //searching for matches in DB
-                        $res = select("password, id", "myusers", "nickname='" . $email_or_nickname . "' OR email ='" . $email_or_nickname . "'");
-                        
-                        $curr_user_id = $res['id'];
-                        
-                        if($res != -1){
-                            if($res != 0) {
-                                if (password_verify($password, $res['password'])) //is  password correct
-                                {
-                                    //deletting cookie from user
-                                    delete_user_cookie("LibChangeCookie");
-                                    
-                                    set_log_cookie($curr_user_id);
-                                    
-                                    //sending user to the main page
-                                    header("Location: /index.php");
+                        if (is_requests_amount_ok($_SERVER['REMOTE_ADDR']) == false) {
+                            $ok_error = $max_requests_achieved;
+                        }
+                        else {
+                            //searching for matches in DB
+                            $res = select("password, id", "myusers", "nickname='" . $email_or_nickname . "' OR email ='" . $email_or_nickname . "'");
+                            
+                            $curr_user_id = $res['id'];
+                            
+                            if($res != $DB_ERROR){
+                                if($res != $EMPTY_ANSWER) {
+                                    if (password_verify($password, $res['password'])) //is  password correct
+                                    {
+                                        //deletting cookie from user
+                                        delete_user_cookie("LibChangeCookie");
+                                        
+                                        set_log_cookie($curr_user_id);
+                                        
+                                        //sending user to the main page
+                                        direct_to("index.php");
+                                    }
+                                    else {
+                                        $ok_error = $wrong_password_error;
+                                    }
                                 }
                                 else {
-                                    $ok_error = $wrong_password_error;
+                                    $ok_error = $ok_user_existance_error;
                                 }
-                            }
-                            else {
-                                $ok_error = $ok_user_existance_error;
                             }
                         }
                     }
@@ -102,14 +115,7 @@
                 <button>I don`t remember my password :(</button>
             </a>
             <?php
-                if ($fatal_error != "")
-                echo '<p class="fatal_error">' . $fatal_error . '</p>';
-                
-                if ($ok_error != "")
-                    echo '<p class="ok_error">' . $ok_error . '</p>';
-                    
-                if ($suc_message != "")
-                    echo '<p class="success">' . $suc_message . '</p>';
+                form_error_section($fatal_error, $ok_error, $suc_message);
             ?>
         </section>
     </section>

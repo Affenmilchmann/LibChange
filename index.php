@@ -24,26 +24,23 @@
             $suc_message = ""; 
             
             // $check_res codes are in /funcs.php
-            if($check_res == 1) {
+            if($check_res == $OK) {
                 $user_id = get_id($_COOKIE["LibChangeCookie"]);
-                $user_nickname = get_nickname($user_id);
-                if ($user_id == -1 or $user_nickname == -1) {
-                    $fatal_error = $select_error;
-                }
-                else if (is_int($user_nickname)) {
-                    delete_user_cookie("LibChangeCookie");
-                }
+                
+                $user_info = get_user_info($user_id);
+                
+                $user_nickname = $user_info['nickname'];
             }
-            else if ($check_res == 2) {
-                header("Location: /ip_conflict.php");
+            else if ($check_res == $IP_CONFLICT) {
+                direct_to("ip_conflict.php");
             }
-            else if ($check_res == -1) {
+            else if ($check_res == $DB_ERROR) {
                 $fatal_error = $cookie_select_error;    
             }
             
             
             //making hat (aka 'shapka') html code
-            form_hat($check_res == 1, $user_nickname);
+            form_hat($check_res == $OK, $user_nickname);
         ?>
         
         <section>
@@ -54,7 +51,7 @@
                     if ($user_nickname != "NULL") {
                         echo '
                         
-                        <a href="request.php">
+                        <a href="request_posting.php">
                             <button>Request!</button>
                         </a>
                         
@@ -90,14 +87,7 @@
             </div>
         </section> 
         <?php
-            if ($fatal_error != "")
-                echo '<p class="fatal_error">' . $fatal_error . '</p>';
-                
-            if ($ok_error != "")
-                echo '<p class="ok_error">' . $ok_error . '</p>';
-                
-            if ($suc_message != "")
-                echo '<p class="success">' . $suc_message . '</p>';    
+            form_error_section($fatal_error, $ok_error, $suc_message);   
         ?>
     </body>
 </html>
