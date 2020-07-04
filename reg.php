@@ -17,6 +17,12 @@
         $ok_error = "";
         $fatal_error = "";
         $suc_message = ""; 
+		
+		//setting glob values
+		$nickname = "";
+		$user_nickname = "";
+		$email = "";
+		$location = "";
 
         // $check_res codes are in /funcs.php
         if($check_res == $OK) {
@@ -31,17 +37,27 @@
         else if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $nickname = test_input($_POST["nickname"]);
             $email = test_input($_POST["email"]);
-            $location = test_input($_POST["location"]);
             $password = test_input($_POST["password"]);
             $password_repeat = test_input($_POST["password_repeat"]);
+			
+			$city = test_input($_POST["city"]);
+			$country = test_input($_POST["country"]);
     
+			echo $city . " " . $country;
+	
             // checking existanse
             $nickname_res = select("nickname", "myusers", "LOWER(nickname) ='" . strtolower($nickname) . "'");
             $email_res = select("email", "myusers", "LOWER(email) ='" . strtolower($email) . "'");
             
             
             if($nickname_res != $DB_ERROR and $email_res != $DB_ERROR) {
-                if (strlen($nickname) == 0) {
+				if ($city == "") {
+					$ok_error = $city_is_not_selected;
+				}
+                else if ($country != null and $city != null and !check_location_input($country, $city)) {
+					$fatal_error = $location_check_error;
+				}
+				else if (strlen($nickname) == 0) {
                     $ok_error = $nickname_empty_error;
                 }
                 else if (strtolower($nickname_res['nickname']) == strtolower($nickname)) {
@@ -80,18 +96,16 @@
                     if (strlen($email) != 0) {
                         $where .= ", `email`";
                     }
-                    if (strlen($location) != 0) {
-                        $where .= ", `city`";
-                    }
+					$where .= ", `city_id`";
+					$where .= ", `country_id`";
                     $where .= ")";
                     
                     $what = "('" . $nickname . "','" . password_hash($password, PASSWORD_DEFAULT) . "','" . $code . "'";
                     if (strlen($email) != 0) {
                         $what .= ", '" . strtolower($email) . "'";
                     }
-                    if (strlen($location) != 0) {
-                        $what .= ", '" . $location . "'";
-                    }
+					$what .= ", '" . $city . "'";
+					$what .= ", '" . $country . "'";
                     $what .= ")";
                     
                     //sending INSERT message
@@ -100,18 +114,18 @@
                     {
                         delete_user_cookie("LibChangeCookie");
                         
-                        //generating cookie key
-                        $key = getKey(20);
-                        //setting cookie on user side
-                        setcookie("LibChangeCookie", $key, time() + (86400), "/"); 
-                        
-                        //getting new user id
-                        $res = select("id", "myusers", "nickname ='" . $nickname . "'");
-                        //and inserting new cookie
-                        $res = insert("`cookies`(`user_id`, `cookie`)", "(" . $res['id'] . ", '" . $key . "')");
+						$temp_user_id = select("id", "myusers", "nickname='" . $nickname . "'");
+						
+						if ($temp_user_id != $DB_ERROR) {
+							set_log_cookie($temp_user_id['id']);
+						}
+						else {
+							$fatal_error = $select_error;
+						}
                         
                         //sending confirmation code to users email
-                        direct_to("message_send.php");
+						if ($fatal_error == "" and $ok_error == "")
+							direct_to("message_send.php");
                     }
                     else {
                         $fatal_error = $insert_error;
@@ -125,8 +139,14 @@
         
         //making hat (aka 'shapka') html code
         form_hat($check_res == $OK, $user_nickname);
+		
+		//making array with countries
+		$countries = sorted_select('location_countries', "name");
+		$cities = select("*", "location_cities", "1", true);
+
     ?>
-    
+	
+	
     <section class="main">
         <section class="main_child">
             <h2>Registration form</h2>
@@ -151,10 +171,23 @@
                 <br>
                 <div>
                     <div>
-                        Location:
+                        Country*:
                     </div>
                     <div>
-                        <input type="text" name="location" <?php echo "value='" . $location . "'"?>>
+                        <select name="country" id="CountrySelect" onchange="countryChanged()">
+
+						</select>
+                    </div>
+                </div>
+                <br>
+				<div>
+                    <div>
+                        City*:
+                    </div>
+                    <div>
+                        <select name="city" id="CitySelect">
+
+						</select>
                     </div>
                 </div>
                 <br>
@@ -184,5 +217,56 @@
             </form>
         </section>
     </section>
-    
+    <p id="debug">No output</p>
 </body>
+
+<script>
+	var cities = <?php echo json_encode($cities); ?>;
+	//filling country list
+	var countries = <?php echo json_encode($countries); ?>;
+	
+	//document.getElementById("debug").innerHTML = 5 + 6;
+	
+	var sel = document.getElementById('CountrySelect');
+	
+	for (var i = 0; countries[i] != null; i++) {
+		var opt = document.createElement('option');
+				
+		opt.innerHTML = countries[i][1];
+		opt.value = countries[i][0];
+		sel.appendChild(opt);
+	}
+	
+	countryChanged();
+	
+	function countryChanged() {
+		var t0 = performance.now()
+		
+		var country_id = document.getElementById("CountrySelect").value;
+		
+		var sel = document.getElementById('CitySelect');
+		
+		//clearing previous cities
+		var length = sel.options.length;
+		for (i = length-1; i >= 0; i--) {
+		  sel.options[i] = null;
+		}
+		
+		var is_found = false;
+		
+		for (var i = 0; cities[i] != null && (!is_found || cities[i][2] == country_id); i++) {
+			if (cities[i][2] == country_id) {	
+				is_found = true;
+			
+				var opt = document.createElement('option');
+				
+				opt.innerHTML = cities[i][1];
+				opt.value = cities[i][0];
+				sel.appendChild(opt);
+			}
+		}
+		
+		var t1 = performance.now()
+		document.getElementById("debug").innerHTML = "Call to doSomething took " + (t1 - t0) + " milliseconds.";
+	}
+</script>

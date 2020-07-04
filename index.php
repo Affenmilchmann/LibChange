@@ -14,6 +14,7 @@
             
             $user_id = -1;
             $user_nickname = "NULL";
+			$email_confirmed = "99999";
             
             //checking user cookie
             $check_res = check_user_cookie();
@@ -30,6 +31,8 @@
                 $user_info = get_user_info($user_id);
                 
                 $user_nickname = $user_info['nickname'];
+				
+				$email_confirmed = $user_info['email_confirmed'];
             }
             else if ($check_res == $IP_CONFLICT) {
                 direct_to("ip_conflict.php");
@@ -48,18 +51,21 @@
                 <section class="left_menu">
                     <h3 class="mini_main_heading">Make a request.</h3>
                     <?php
-                    if ($user_nickname != "NULL") {
-                        echo '
+                    if ($user_nickname == "NULL") {
+						echo 'You need an account to request!'; 
+                    }
+                    else if ($email_confirmed != -1){
+                       echo 'Your email is not confirmed!'; 
+                    }
+					else {
+						echo '
                         
                         <a href="request_posting.php">
                             <button>Request!</button>
                         </a>
                         
                         ';
-                    }
-                    else {
-                       echo 'You need an account to request!'; 
-                    }
+					}
                     ?>
                 </section>
                 

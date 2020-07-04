@@ -19,17 +19,24 @@
     $IP_CONFLICT = 2;
     $COOKIE_NOT_SET = 3;
     $OK = 4;
+	$UNEXPECTED_EMPTY_RES = 5;
 
     //----------message texts
     //      FATAL ONES
     $user_existanse_error = "Whoops! Looks like your profile has been deleted. Or there is a DB error while checking your cookie file. Please contact " . $support_email;
     $select_error = "Error. While selecting from DB. Please contact " . $support_email;
     $insert_error = "Error. While inserting into DB. Please contact " . $support_email;
+	$delete_error = "Error. While deletting from DB. Please contact " . $support_email;
     $update_error = "Error. While updating DB. Please contact " . $support_email;
     $cookie_select_error = "Error. While selecting you cookie file from DB. Please contact " . $support_email;
     $email_sending_error = "Error. While sending email. Please contact " . $support_email;
+	$location_check_error = "Error. While checking location format. Please contact " . $support_email;
+	$unexpected_empty_result_error = "Error. DB has returned unexpected empty result. Please contact " . $support_email;
     
     //      OK ERRORS
+	//global
+	$not_logged = "You must login to make this action! Sorry!";
+	
     $email_not_confirmed_error = "You can not do this while your email is not confirmed!";
     $max_requests_achieved = "Looks like you are making too much requests to the server! Slow down and wait a bit, please.";
     $wrong_password_error = "Password is incorrect!";
@@ -42,6 +49,7 @@
     $incorrect_answer_error = 'Answer is incorrect.';
     $login_existance_error = 'We cant find your login :(';
     //registration
+	$city_is_not_selected = "You have to say your city.";
     $nickname_already_exists_error = 'This nickname already exists!';
     $nickname_format_error = "Only letters, digits and '_' allowed in nickname!";
     $nickname_empty_error = 'You must input your nickname!';

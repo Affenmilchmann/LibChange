@@ -42,11 +42,19 @@
                 
                 $user_nickname = $user_info['nickname'];
                 $user_email = $user_info['email'];
-                $user_location = $user_info['city'];
+                $user_city_id = $user_info['city_id'];
+				$user_country_id = $user_info['country_id'];
                 $user_helps = $user_info['fin_requests'];
                 $user_ruins = $user_info['ruined_requests'];
                 $email_confirm = $user_info['email_confirmed'];
                 
+				$user_location = get_location($user_country_id, $user_city_id);
+				
+				if ($user_location == $DB_ERROR)
+					$fatal_error = $select_error;
+				else if ($user_location == $UNEXPECTED_EMPTY_RES) 
+					$fatal_error = $unexpected_empty_result_error;
+				
                 $is_owner = true;
             }
             else if ($check_res == $IP_CONFLICT) {
@@ -71,9 +79,17 @@
                         if (strtolower($user_info['nickname']) != strtolower($user_nickname)) {
                             $is_owner = false;
                             $user_nickname = $user_info['nickname'];
-                            $user_location = $user_info['city'];
+                            $user_city_id = $user_info['city_id'];
+							$user_country_id = $user_info['country_id'];
                             $user_helps = $user_info['fin_requests'];
                             $user_ruins = $user_info['ruined_requests'];
+							
+							$user_location = get_location($user_country_id, $user_city_id);
+				
+							if ($user_location == $DB_ERROR)
+								$fatal_error = $select_error;
+							else if ($user_location == $UNEXPECTED_EMPTY_RES) 
+								$fatal_error = $unexpected_empty_result_error;
                         }
                     }
                     else {
@@ -92,7 +108,9 @@
                     direct_to("log.php");
                 }
                 
-                if($_SERVER["REQUEST_METHOD"] == "POST") {
+                /*
+				old location change
+				if($_SERVER["REQUEST_METHOD"] == "POST") {
                     $new_location = test_input($_POST["new_location"]);
                     $upd_res = update("myusers", "city='" . $new_location . "'", "id='" . $user_id . "'");
                     
@@ -101,7 +119,7 @@
                     }
                     
                     header(htmlspecialchars("Location: " . $_SERVER["PHP_SELF"]));
-                }
+                }*/
                 
         ?>  
         <section class="main_profile">
@@ -119,27 +137,11 @@
                     
                     <?php
                 }
-                if ($is_owner) {
-                    ?>
-                    
-                    <form method="post" action=" <?php echo htmlspecialchars($_SERVER["PHP_SELF"]) ?>"> 
-                        <h4 class="mini_heading">Location:</h4>
-                        <input type="text" name="new_location" value="<?php echo $user_location ?>"> 
-                        <input type="submit" name="submit" value="Change location"> 
-                    </form>
-                    
-                    <?php
-                }
-                else {
-                    ?>
-                    
-                    <h4 class="mini_heading">Location:</h4>
-                    <p> <?php echo $user_location ?> </p>
-                    
-                    <?php
-                }
-                
                 ?>
+				
+				<h4 class="mini_heading">Location:</h4>
+				<p> <?php echo $user_location ?> </p>
+                    
                 
                 <h4 class="mini_heading">Rating*:</h4>
                 <h3> <?php echo strval($user_helps - 2 * $user_ruins) ?> </h3>

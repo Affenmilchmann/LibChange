@@ -178,6 +178,8 @@
     }
     
     function is_requests_amount_ok($user_ip) {
+		date_default_timezone_set('Europe/Moscow');
+		
         include 'constants_and_errors.php';
                 
         $data = select("first_request, req_amount", "ip_requests", '`ip`="' . $user_ip . '"');
@@ -206,15 +208,24 @@
         //calculating difference in seconds
         $diff = $curr->getTimestamp() - $date->getTimestamp();
         
+		echo "<br>" . $date->format('o-m-j H:i:s') . " --- first req<br>";
+		echo "<br>" . $curr->format('o-m-j H:i:s') . " --- curr time<br>";
+		echo "<br>" . $diff . " --- difference in seconds<br>";
+		
         /*echo $MAX_REQUESTS_INTERVAL . "<br>";
         echo $diff . "<br>";*/
-        
         //if time is expiered, than reset
         if ($diff > $MAX_REQUESTS_INTERVAL) {
             
             $res = delete("ip_requests", "`ip`='" . $user_ip . "'");
             
-            if ($res == $DB_ERROR) return $DB_ERROR;
+			echo "ip is: " . $user_ip;
+			
+            if ($res == $DB_ERROR) 
+			{
+				echo "ERROR while deletting: " . mysqli_error($res) . "<br>";
+				return $DB_ERROR;
+			}
             
             return true;
         }
@@ -277,6 +288,33 @@
         insert("`cookies`(`user_id`, `cookie`, `ip`)", "(" . $user_id . ", '"  . $key . "', '" . $_SERVER['REMOTE_ADDR'] . "')");
     }
     
+	
+	function check_location_input($county, $city) {
+		include 'constants_and_errors.php';
+		
+		$city_result = select("*", "location_cities", "id = " . $city);
+		$county_result = select("*", "location_countries", "id = " . $county);
+		
+		if ($city_result == $EMPTY_ANSWER) {
+			echo "city format error.";
+			return false;
+		}
+		if ($city_result == $DB_ERROR) {
+			echo "city check have returned DB_ERROR";
+			return false;
+		}
+		if ($county_result == $EMPTY_ANSWER) {
+			echo "county format error.";
+			return false;
+		}
+		if ($county_result == $DB_ERROR) {
+			echo "county check have returned DB_ERROR";
+			return false;
+		}
+		
+		return true;
+	}
+	
     //comparing ip and cookie existance
     function check_user_cookie() {
         include 'constants_and_errors.php';
@@ -299,6 +337,21 @@
         else return $COOKIE_NOT_SET; //cookie is not set
     }
     
+	function get_location($country, $city) {
+		include 'constants_and_errors.php';
+		
+		$country_return = select('name', 'location_countries', 'id = ' . $country);
+		$city_return = select('name', 'location_cities', 'id = ' . $city);
+		
+		if ($country_return == $DB_ERROR or $city_return == $DB_ERROR) {
+			return $DB_ERROR;
+		}
+		if ($country_return == $EMPTY_ANSWER or $city_return == $EMPTY_ANSWER) {
+			return $UNEXPECTED_EMPTY_RES;
+		}
+		return $country_return['name'] . ", " . $city_return['name'];
+	}
+	
     function set_conn() {
         $login_file_name = "login.txt";
         $login_file = fopen($login_file_name, "r");
@@ -340,7 +393,7 @@
         $sql = "INSERT INTO " . $where . " 
                 VALUES " . $what;
             
-        //echo $sql . "<br>";
+        echo $sql . "<br>";
         
         $result = mysqli_query($conn, $sql);
         
@@ -363,6 +416,10 @@
         
         $result = mysqli_query($conn, $sql);
         
+		if ($result == false) {
+            echo "ERROR: " . mysqli_error($conn) . "<br>";
+        }
+		
         if ($conn != false) {
             $conn->close();
         }
@@ -388,7 +445,8 @@
         return $result;
     }
     
-    function select($what, $from, $where) {
+	//write select('...', '...', '...', true) if you want get more than one line of sql answer
+    function select($what, $from, $where, $return_multiple_lines = false) {
         include "constants_and_errors.php";
         
         $conn = set_conn();
@@ -405,14 +463,17 @@
             }
             
             if ($result->num_rows > 0) {
-                $row = mysqli_fetch_array($result);
+				if ($return_multiple_lines)
+					$row = mysqli_fetch_all($result);
+				else
+					$row = mysqli_fetch_array($result);
                 
                 return $row;
             }
             else return $EMPTY_ANSWER;
         }
         else {
-            echo "ERROR: " . mysqli_error($conn) . "<br>"; 
+			echo "ERROR: " . mysqli_error($conn) . "<br>";
             if ($conn != false) {
                 $conn->close();
             }
@@ -420,6 +481,35 @@
         }
     }
     
+	function sorted_select($from, $sortby) {
+		include "constants_and_errors.php";
+        
+        $conn = set_conn();
+        
+        $sql = "SELECT * 
+                FROM " . $from . " 
+                ORDER BY " . $sortby . " ASC";
+				
+		if($result = mysqli_query($conn, $sql)) {
+            if ($conn != false) {
+                $conn->close();
+            }
+            
+            if ($result->num_rows > 0) {
+				$row = mysqli_fetch_all($result);
+                return $row;
+            }
+            else return $EMPTY_ANSWER;
+        }
+        else {
+            if ($conn != false) {
+                $conn->close();
+            }
+			echo "ERROR: " . mysqli_error($conn) . "<br>";
+            return $DB_ERROR;
+        }
+	}
+	
     //high functions
     function get_user_info($user_id) {
         $info = select("*", "myusers", "id=" . $user_id);
@@ -456,7 +546,7 @@
         }
     }
     
-    function get_location($user_id) {
+    /*function get_location($user_id) {
         $ans = global_get($user_id, "city");
         
         if ($ans == "") {
@@ -464,7 +554,7 @@
         }
         
         return global_get($user_id, "city");
-    }
+    }*/
     
     function get_question($user_id) {
         return global_get($user_id, "question");

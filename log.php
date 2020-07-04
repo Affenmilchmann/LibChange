@@ -19,6 +19,8 @@
         $ok_error = "";
         $fatal_error = "";
         $suc_message = ""; 
+		$email_or_nickname = "";
+		$user_nickname = "";
         
         // $check_res codes are in /funcs.php
         if ($check_res == $IP_CONFLICT) {
@@ -53,7 +55,7 @@
                         Nickname/E-mail:
                     </div>
                     <div>
-                        <input type="text" name="email_or_nickname" <?php echo "value='" . $nickname , "'"?>>
+                        <input type="text" name="email_or_nickname" <?php echo "value='" . $email_or_nickname , "'"?>>
                     </div>
                 </div>
                 <br>

@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="images/favicon.png" type="image/png">
     <link rel="stylesheet" href="style.css">
-    <title>Recovery</title>
+    <title>Post a request</title>
 </head>
 <body class="glob">
     
@@ -37,7 +37,7 @@
         else if ($check_res == $DB_ERROR) {
             $fatal_error = $cookie_select_error; 
         }
-        else if ($check_res == 0 or $check_res == 3) {
+        else if ($check_res == $COOKIE_NOT_SET) {
             direct_to("log.php");
         }
         

@@ -54,9 +54,12 @@
                         <br> If you did, just click this link and we will send you your new password. <br>" . 
                         "<a href=\"". $link. "\" title='My Page'>" . $link . "</a> <br>";
                         $message .= "This link is for single use.";
+						
+						echo "sending";
                         
                         if (send_email($message , $sel_res['email']) == false) {
                             $fatal_error = $email_sending_error;
+							echo "error";
                         }
                     }
                     else {

@@ -1,3 +1,11 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="images/favicon.png" type="image/png">
+    <link rel="stylesheet" href="style.css">
+    <title>Mail-sending page</title>
+</head>
+<body class="glob">
 <?php
     include("funcs.php");
     
@@ -39,12 +47,14 @@
     else {
         if (send_email("Your security code is: " . $email_confirm . ". \n \n You are not to reply", $user_email) == true) {
             echo "TRUE<br>";
+			direct_to("confirm.php");
         }
         else {
             echo "FALSE<br>" . error_get_last()['message'];
+			$fatal_error = $email_sending_error;
         }
-        direct_to("confirm.php");
     }
-    
+    form_hat($check_res == $OK, $user_nickname);
     form_error_section($fatal_error, $ok_error, $suc_message);
 ?>
+</body>
