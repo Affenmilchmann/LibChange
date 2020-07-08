@@ -220,53 +220,16 @@
     <p id="debug">No output</p>
 </body>
 
-<script>
-	var cities = <?php echo json_encode($cities); ?>;
+<script>	
+	var cities = <?php echo json_encode(select("*", "location_cities", "1", true));?>;
 	//filling country list
-	var countries = <?php echo json_encode($countries); ?>;
-	
-	//document.getElementById("debug").innerHTML = 5 + 6;
-	
-	var sel = document.getElementById('CountrySelect');
-	
-	for (var i = 0; countries[i] != null; i++) {
-		var opt = document.createElement('option');
-				
-		opt.innerHTML = countries[i][1];
-		opt.value = countries[i][0];
-		sel.appendChild(opt);
+	var countries = <?php echo json_encode(sorted_select('location_countries', "name"));?>;
+
+	function countryChanged() {
+		refillCitySelect(document.getElementById("CountrySelect").value, "CitySelect", cities);
 	}
+	
+	fillCoutrySelect("CountrySelect", countries);
 	
 	countryChanged();
-	
-	function countryChanged() {
-		var t0 = performance.now()
-		
-		var country_id = document.getElementById("CountrySelect").value;
-		
-		var sel = document.getElementById('CitySelect');
-		
-		//clearing previous cities
-		var length = sel.options.length;
-		for (i = length-1; i >= 0; i--) {
-		  sel.options[i] = null;
-		}
-		
-		var is_found = false;
-		
-		for (var i = 0; cities[i] != null && (!is_found || cities[i][2] == country_id); i++) {
-			if (cities[i][2] == country_id) {	
-				is_found = true;
-			
-				var opt = document.createElement('option');
-				
-				opt.innerHTML = cities[i][1];
-				opt.value = cities[i][0];
-				sel.appendChild(opt);
-			}
-		}
-		
-		var t1 = performance.now()
-		document.getElementById("debug").innerHTML = "Call to doSomething took " + (t1 - t0) + " milliseconds.";
-	}
 </script>

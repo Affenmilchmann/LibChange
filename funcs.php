@@ -324,7 +324,7 @@
             
             if ($res != $EMPTY_ANSWER and $res != $DB_ERROR) {
                 if ($res['ip'] == $_SERVER['REMOTE_ADDR']) {
-                    return $OK; //all ok
+                    return $OK; //all is ok
                 }
                 else return $IP_CONFLICT; //ip conflict
             }
@@ -587,4 +587,46 @@
     function get_code($user_id) {
         return global_get($user_id, "email_confirmed");
     }
+	
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ?>
+<script>
+	function refillCitySelect(country_id, element_id, cities) {		
+		var sel = document.getElementById(element_id);
+		
+		//clearing previous cities
+		var length = sel.options.length;
+		for (i = length-1; i >= 0; i--) {
+		  sel.options[i] = null;
+		}
+		
+		var is_found = false;
+		
+		for (var i = 0; cities[i] != null && (!is_found || cities[i][2] == country_id); i++) {
+			if (cities[i][2] == country_id) {	
+				is_found = true;
+			
+				var opt = document.createElement('option');
+				
+				opt.innerHTML = cities[i][1];
+				opt.value = cities[i][0];
+				sel.appendChild(opt);
+			}
+		}
+	}
+	
+	function fillCoutrySelect(element_id, countries) {
+		var sel = document.getElementById(element_id);
+	
+		for (var i = 0; countries[i] != null; i++) {
+			var opt = document.createElement('option');
+			
+			opt.innerHTML = countries[i][1];
+			opt.value = countries[i][0];
+			sel.appendChild(opt);
+		}
+	}
+</script>
