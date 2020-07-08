@@ -67,7 +67,7 @@
             else if (strlen($title) > $max_location_or_title_length) {
                 $ok_error = $location_or_title_lenght_error . strlen($title); 
             }
-            else if (strlen($comments) > 100) {
+            else if (strlen($comments) > 1000) {
                 $ok_error = $comment_lenght_error . strlen($comments); 
             }
             else if (!check_text($title) or !check_text($comments)) {

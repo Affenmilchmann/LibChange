@@ -349,7 +349,7 @@
 		if ($country_return == $EMPTY_ANSWER or $city_return == $EMPTY_ANSWER) {
 			return $UNEXPECTED_EMPTY_RES;
 		}
-		return $country_return['name'] . ", " . $city_return['name'];
+		return  $city_return['name'] . ", " . $country_return['name'];
 	}
 	
     function set_conn() {

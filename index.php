@@ -75,18 +75,19 @@
                         <th>Location</th>
                         <th>Title</th>
                     </tr>
-                    <tr>
-                        <td>Germany, Köln</td>
-                        <td>Der Kunst ist gut, Hans Stern, 2034</td>
-                    </tr>
-                    <tr>
-                        <td>Russia, Voronezh</td>
-                        <td>Исскуство это хорошо, Иван Спичкин, 2034</td>
-                    </tr>
-                    <tr>
-                        <td>USA, Washingtin</td>
-                        <td>The art is good, John Gates, 2034</td>
-                    </tr>
+                    <?php
+					$requests = select("city_id, country_id, title, id", "requests", "1", true);
+					echo ($requests[0][0]);
+					
+					for ($i = 0; $i < count($requests); $i++) {
+						?>
+						<tr>
+							<td><?php echo get_location($requests[$i][1], $requests[$i][0])?></td>
+							<td><a href="request_page.php?id=<?php echo $requests[$i][3] ?>"><?php echo str_replace('_', ' ', $requests[$i][2], )?></a></td>
+						</tr>
+						<?php
+					}
+					?>
                 </table>
                 </section>
                 <section class="right_menu">Right!</section>
