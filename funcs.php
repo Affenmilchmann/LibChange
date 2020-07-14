@@ -399,6 +399,7 @@
         
         if ($result == false) {
             echo "ERROR: " . mysqli_error($conn) . "<br>";
+			return $DB_ERROR;
         }
         
         if ($conn != false) {
@@ -418,6 +419,7 @@
         
 		if ($result == false) {
             echo "ERROR: " . mysqli_error($conn) . "<br>";
+			return $DB_ERROR;
         }
 		
         if ($conn != false) {

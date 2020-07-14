@@ -32,7 +32,8 @@
     $email_sending_error = "Error. While sending email. Please contact " . $support_email;
 	$location_check_error = "Error. While checking location format. Please contact " . $support_email;
 	$unexpected_empty_result_error = "Error. DB has returned unexpected empty result. Please contact " . $support_email;
-    
+    $file_load_error = "Error occured while uploading you file. Try again and contact " . $support_email . " if it will pop again. Error code: ";
+	
     //      OK ERRORS
 	//global
 	$not_logged = "You must login to make this action! Sorry!";
@@ -67,6 +68,9 @@
     $title_empty_error = "Title field is required!"; 
     $location_or_title_lenght_error = "Location and title max lenght is " . $max_location_or_title_length . "! Your message lenght is ";
     $comment_lenght_error = "Comments max lenght is " . $comments_max_length . "! Your message lenght is ";
+	//file uploading
+	$file_too_large = "Your file is too large!";
+	$wrong_extension = "You can not upload files with such extension!";
 
     
     //      SUCCESS ONES
@@ -75,4 +79,5 @@
     $recovery_success_message = "We sent instructions on your mail, if you wrote your nickname or email right.";
     $password_sent_message = 'Password sent to your mail.';
     $request_posted_message = "Your request is posted!";
+	$file_uploaded = "File was successfuly uploaded! Your respond was accepted";
 ?>

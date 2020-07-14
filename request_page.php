@@ -51,11 +51,14 @@
             
             //making hat (aka 'shapka') html code
             form_hat($check_res == $OK, $user_nickname);
-			
-			if ($_GET["id"] != "") {
-				$res = select('*', "requests", "id = " . $_GET["id"]);
-				if ($res == $EMPTY_ANSWER)
+
+			//getting request info from reqest id
+			if (is_numeric($_GET["id"]) and $_GET["id"] != "") {
+				$res = select('*', "requests", "id = " . test_input($_GET["id"]));
+				if ($res == $EMPTY_ANSWER) {
+					direct_to("index.php");
 					return;
+				}
 				if ($res == $DB_ERROR)
 					$fatal_error = $select_error;
 				else {
@@ -65,6 +68,9 @@
 					$req_date = $res['date'];
 					$req_location = get_location($res['country_id'], $res['city_id']);
 				}
+			}
+			else {
+				direct_to("index.php");
 			}
         ?>
 		<section class="main">
@@ -82,5 +88,10 @@
 			
 			<p class="mini_heading">Date</p>
 			<p><?php echo $req_date?></p>
+			
+			<a href="respond_request.php?id=<?php echo test_input($_GET["id"])?>">
+				<button> Respond </button>
+			</a>
+			<?php form_error_section($fatal_error, $ok_error, $suc_message); ?>
 		</section>
 </body>
