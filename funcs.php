@@ -438,7 +438,14 @@
                     WHERE " . $where . "
                 ";
         
+		echo $sql . "<br>";
+		
         $result = mysqli_query($conn, $sql);
+		
+		if ($result == false) {
+            echo "ERROR: " . mysqli_error($conn) . "<br>";
+			return $DB_ERROR;
+        }
         
         if ($conn != false) {
             $conn->close();

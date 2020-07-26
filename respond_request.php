@@ -19,6 +19,7 @@
 		
 		$req_title = "";
 		$reqestor_nickname = "";
+		$responder_nickname = "";
 		$req_location = "";
 		
 		//checking user cookie
@@ -38,6 +39,10 @@
 			$user_nickname = $user_info['nickname'];
 			
 			$email_confirmed = $user_info['email_confirmed'];
+			
+			//user can not answer without mail connected
+			if ($email_confirmed != -1)
+				$ok_error = $email_not_confirmed_error;
 		}
 		else if ($check_res == $IP_CONFLICT) {
 			direct_to("ip_conflict.php");
@@ -45,10 +50,6 @@
 		else if ($check_res == $DB_ERROR) {
 			$fatal_error = $cookie_select_error;    
 		}
-		
-		//user can not answer without mail connected
-		if ($email_confirmed != -1)
-			$ok_error = $email_not_confirmed_error;
 		
 		//making hat (aka 'shapka') html code
 		form_hat($check_res == $OK, $user_nickname);
@@ -65,6 +66,13 @@
 			else {
 				$req_title = str_replace("_", " ", $res['title']);
 				$reqestor_nickname = get_user_info($res['req_id'])['nickname'];
+				if ($res['ans_id'] != -1) {
+					$responder_nickname = select("nickname", "myusers", "id=" . $res['ans_id']);
+					if ($responder_nickname != $DB_ERROR) 
+						$responder_nickname = $responder_nickname['nickname'];
+					else
+						$fatal_error = $select_error;
+				}
 				$req_location = get_location($res['country_id'], $res['city_id']);
 				
 				$is_responsed = $res['response'];
@@ -75,7 +83,7 @@
 		}
 		
 		//uploading image
-		if ($_SERVER["REQUEST_METHOD"] == "POST" and $email_confirmed == -1 and isset($_FILES['userfile']) and $is_responsed == "-1") {
+		if ($_SERVER["REQUEST_METHOD"] == "POST" and $email_confirmed == -1 and isset($_FILES['userfile']) and $is_responsed == "-1" and $check_res == $OK) {
 			$extension = explode('.', $_FILES['userfile']['name'])[1];
 			
 			if ($extension != "jpeg" and $extension != "jpg" and $extension != "png" and $extension != "zip") {
@@ -85,11 +93,11 @@
 				$ok_error = $file_too_large;
 			}
 			else {
-				$uploaddir = 'E:\\XAMPP\\htdocs\\images\\';
+				$uploaddir = 'E:\\XAMPP\\htdocs\\responds\\';
 				$uploadfile = $uploaddir . $_GET["id"] . '.' . $extension;
 
 				if (move_uploaded_file($_FILES['userfile']['tmp_name'], $uploadfile)) {
-					$res = update("requests", "response = '" . $_GET["id"] . '.' . $extension . "'", "id = " . $_GET["id"]);
+					$res = update("requests", "response = '" . $_GET["id"] . '.' . $extension . "', " . "ans_id = " . $user_id, "id = " . $_GET["id"]);
 					if ($res == $DB_ERROR)
 						$fatal_error = $update_error;
 					else {
@@ -132,8 +140,8 @@
 	
 	if ($is_responsed != '-1') {
 	?>
-	<h3>Somebody already responded!</h3>
-	<a href="/images/<?php echo $is_responsed ?>">
+	<h3><?php echo $responder_nickname?> already responded!</h3>
+	<a href="/responds/<?php echo $is_responsed ?>">
 		<button>Get file</button>
 	</a>
 	<?php

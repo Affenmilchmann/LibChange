@@ -22,6 +22,11 @@
 			$req_comment = "";
 			$req_date = "";
 			$req_location = "";
+			$req_responded = "-1";
+			
+			$responder_id = -1;
+			$responder_nickname = "Somebody";
+			$responder_exists = false;
             
             //checking user cookie
             $check_res = check_user_cookie();
@@ -67,6 +72,16 @@
 					$req_comment = str_replace("_", " ", $res['comment']);
 					$req_date = $res['date'];
 					$req_location = get_location($res['country_id'], $res['city_id']);
+					$req_responded = $res['response'];
+
+					$responder_id = $res['ans_id'];
+					$responder_nickname = select("nickname", "myusers", "id=" . $responder_id);
+					if ($responder_nickname != $DB_ERROR) {
+						$responder_nickname = $responder_nickname['nickname'];
+						$responder_exists = true;
+					}
+					else
+						$fatal_error = $select_error;
 				}
 			}
 			else {
@@ -89,9 +104,37 @@
 			<p class="mini_heading">Date</p>
 			<p><?php echo $req_date?></p>
 			
-			<a href="respond_request.php?id=<?php echo test_input($_GET["id"])?>">
-				<button> Respond </button>
+			<?php
+			if ($req_responded == "-1") {
+			?>
+				<a href="respond_request.php?id=<?php echo test_input($_GET["id"])?>">
+					<button> Respond </button>
+				</a>
+			<?php 
+			}
+			else {
+				if ($responder_exists) {
+			?>
+					<h3>
+						<a href="profile.php?id=<?php echo $responder_id?>">
+							<?php echo $responder_nickname?>
+						</a>
+							already responded!
+					</h3>
+			<?php
+				}
+				else {
+			?>
+					<h3>Somebody already responded!</h3>
+			<?php
+				}
+			?>
+			<a href="/responds/<?php echo $req_responded ?>">
+				<button>Get file</button>
 			</a>
+			<?php
+			}
+			?>
 			<?php form_error_section($fatal_error, $ok_error, $suc_message); ?>
 		</section>
 </body>
